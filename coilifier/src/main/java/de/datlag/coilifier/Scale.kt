@@ -1,0 +1,12 @@
+package de.datlag.coilifier
+
+enum class Scale {
+    FIT_CENTER,
+    CENTER_CROP,
+    CENTER_INSIDE,
+    CIRCLE_CROP,
+    OPTIONAL_FIT_CENTER,
+    OPTIONAL_CENTER_CROP,
+    OPTIONAL_CENTER_INSIDE,
+    OPTIONAL_CIRCLE_CROP,
+}

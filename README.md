@@ -11,6 +11,10 @@ Coilifier-Android is an open source extension library for Android to use Glide i
 * Target extension functions
 * provides Kotlin Builder DSL
 
+**Glide** > [https://github.com/bumptech/glide](https://github.com/bumptech/glide)
+
+**Coil** > [https://github.com/coil-kt/coil](https://github.com/coil-kt/coil)
+
 ## Setup
 Add this line in your root build.gradle at the end of repositories:
 

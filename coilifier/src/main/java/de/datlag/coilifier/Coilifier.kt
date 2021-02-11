@@ -29,6 +29,9 @@ data class Coilifier<ResourceType> internal constructor(
     @DrawableRes val placeholderResId: Int?,
     val placeholderDrawable: Drawable?,
     val placeholderBitmap: Bitmap?,
+    val placeholderScaleMax: Boolean,
+    val placeholderScaleSize: Int?,
+    val placeholderScaleByWidth: Boolean?,
     @DrawableRes val fallbackResId: Int?,
     val fallbackDrawable: Drawable?,
     val fallbackBitmap: Bitmap?,
@@ -64,6 +67,9 @@ data class Coilifier<ResourceType> internal constructor(
         private var placeholderResId: Int? = null
         private var placeholderDrawable: Drawable? = null
         private var placeholderBitmap: Bitmap? = null
+        private var placeholderScaleMax: Boolean = false
+        private var placeholderScaleSize: Int? = null
+        private var placeholderScaleByWidth: Boolean? = null
 
         @DrawableRes
         private var fallbackResId: Int? = null
@@ -158,54 +164,177 @@ data class Coilifier<ResourceType> internal constructor(
             this.errorRequest = null
         }
 
-        fun placeholder(@DrawableRes drawableResId: Int) = apply {
+        fun placeholder(@DrawableRes drawableResId: Int, scaleMax: Boolean = false) = apply {
             this.placeholderResId = drawableResId
             this.placeholderDrawable = null
             this.placeholderBitmap = null
+            this.placeholderScaleMax = scaleMax
+            this.placeholderScaleSize = null
+            this.placeholderScaleByWidth = null
         }
 
-        fun placeholder(drawable: Drawable?) = apply {
+        fun placeholder(@DrawableRes drawableResId: Int, size: Int?, byWidth: Boolean) = apply {
+            this.placeholderResId = drawableResId
+            this.placeholderDrawable = null
+            this.placeholderBitmap = null
+            this.placeholderScaleMax = true
+            this.placeholderScaleSize = size
+            this.placeholderScaleByWidth = byWidth
+        }
+
+        fun placeholder(@DrawableRes drawableResId: Int, view: View, byWidth: Boolean) = apply {
+            placeholder(drawableResId, viewSize(view, byWidth), byWidth)
+        }
+
+        fun placeholder(drawable: Drawable?, scaleMax: Boolean = false) = apply {
             if (drawable is BitmapDrawable) {
                 if (drawable.bitmap.isRecycled) return@apply
             }
             this.placeholderDrawable = drawable
             this.placeholderResId = 0
             this.placeholderBitmap = null
+            this.placeholderScaleMax = scaleMax
+            this.placeholderScaleSize = null
+            this.placeholderScaleByWidth = null
         }
 
-        fun placeholder(bitmap: Bitmap?) = apply {
+        fun placeholder(drawable: Drawable?, size: Int?, byWidth: Boolean) = apply {
+            if (drawable is BitmapDrawable) {
+                if (drawable.bitmap.isRecycled) return@apply
+            }
+            this.placeholderDrawable = drawable
+            this.placeholderResId = 0
+            this.placeholderBitmap = null
+            this.placeholderScaleMax = true
+            this.placeholderScaleSize = size
+            this.placeholderScaleByWidth = byWidth
+        }
+
+        fun placeholder(drawable: Drawable?, view: View, byWidth: Boolean) = apply {
+            placeholder(drawable, viewSize(view, byWidth), byWidth)
+        }
+
+        fun placeholder(bitmap: Bitmap?, scaleMax: Boolean = false) = apply {
             if (bitmap?.isRecycled == true) return@apply
             this.placeholderBitmap = bitmap
             this.placeholderResId = 0
             this.placeholderDrawable = null
+            this.placeholderScaleMax = scaleMax
+            this.placeholderScaleSize = null
+            this.placeholderScaleByWidth = null
         }
 
-        fun placeholder(view: View?) = when (view) {
+        fun placeholder(bitmap: Bitmap?, size: Int?, byWidth: Boolean) = apply {
+            if (bitmap?.isRecycled == true) return@apply
+            this.placeholderBitmap = bitmap
+            this.placeholderResId = 0
+            this.placeholderDrawable = null
+            this.placeholderScaleMax = true
+            this.placeholderScaleSize = size
+            this.placeholderScaleByWidth = byWidth
+        }
+
+        fun placeholder(bitmap: Bitmap?, view: View, byWidth: Boolean) = apply {
+            placeholder(bitmap, viewSize(view, byWidth), byWidth)
+        }
+
+        fun placeholder(view: View?, scaleMax: Boolean = false) = when (view) {
             is ImageView -> {
                 val bitmap = view.getBitmap()
                 if (bitmap != null) {
-                    placeholder(bitmap)
+                    placeholder(bitmap, scaleMax)
                 } else {
-                    placeholder(view.drawable)
+                    placeholder(view.drawable, scaleMax)
                 }
             }
             null -> clearPlaceholder()
-            else -> placeholder(view.getBitmap())
+            else -> placeholder(view.getBitmap(), scaleMax)
         }
 
-        fun placeholder(any: Any?) = when (any) {
-            is Int -> placeholder(any)
-            is Drawable -> placeholder(any)
-            is Bitmap -> placeholder(any)
-            is View -> placeholder(any)
+        fun placeholder(view: View?, size: Int?, byWidth: Boolean) = when (view) {
+            is ImageView -> {
+                val bitmap = view.getBitmap()
+                if (bitmap != null) {
+                    placeholder(bitmap, size, byWidth)
+                } else {
+                    placeholder(view.drawable, size, byWidth)
+                }
+            }
+            null -> clearPlaceholder()
+            else -> placeholder(view.getBitmap(), size, byWidth)
+        }
+
+        fun placeholder(view: View?, viewSize: View, byWidth: Boolean) = apply {
+            placeholder(view, viewSize(viewSize, byWidth), byWidth)
+        }
+
+        fun placeholder(any: Any?, scaleMax: Boolean = false) = when (any) {
+            is Int -> placeholder(any, scaleMax)
+            is Drawable -> placeholder(any, scaleMax)
+            is Bitmap -> placeholder(any, scaleMax)
+            is View -> placeholder(any, scaleMax)
             null -> clearPlaceholder()
             else -> this
+        }
+
+        fun placeholder(any: Any?, size: Int?, byWidth: Boolean) = when (any) {
+            is Int -> placeholder(any, size, byWidth)
+            is Drawable -> placeholder(any, size, byWidth)
+            is Bitmap -> placeholder(any, size, byWidth)
+            is View -> placeholder(any, size, byWidth)
+            null -> clearPlaceholder()
+            else -> this
+        }
+
+        fun placeholder(any: Any?, viewSize: View, byWidth: Boolean) = apply {
+            placeholder(any, viewSize(viewSize, byWidth), byWidth)
+        }
+
+        private fun sizeValid(value: Int?): Boolean {
+            return value == null || value <= 0
+        }
+
+        private fun viewSize(view: View, byWidth: Boolean): Int? {
+            return if (byWidth) {
+                when {
+                    sizeValid(view.width) -> {
+                        view.width
+                    }
+                    sizeValid(view.measuredWidth) -> {
+                        view.measuredWidth
+                    }
+                    sizeValid(view.minimumWidth) -> {
+                        view.minimumWidth
+                    }
+                    else -> {
+                        null
+                    }
+                }
+            } else {
+                when {
+                    sizeValid(view.height) -> {
+                        view.height
+                    }
+                    sizeValid(view.measuredHeight) -> {
+                        view.measuredHeight
+                    }
+                    sizeValid(view.minimumHeight) -> {
+                        view.minimumHeight
+                    }
+                    else -> {
+                        null
+                    }
+                }
+            }
         }
 
         private fun clearPlaceholder() = apply {
             this.placeholderBitmap = null
             this.placeholderDrawable = null
             this.placeholderResId = 0
+            this.placeholderScaleMax = false
+            this.placeholderScaleSize = null
+            this.placeholderScaleByWidth = null
         }
 
         fun fallback(@DrawableRes drawableResId: Int) = apply {
@@ -230,7 +359,7 @@ data class Coilifier<ResourceType> internal constructor(
             this.fallbackDrawable = null
         }
 
-        fun fallback(view: View?) = when(view) {
+        fun fallback(view: View?) = when (view) {
             is ImageView -> {
                 val bitmap = view.getBitmap()
                 if (bitmap != null) {
@@ -390,67 +519,118 @@ data class Coilifier<ResourceType> internal constructor(
         }
 
         internal fun build() = Coilifier(
-                errorResId,
-                errorDrawable,
-                errorBitmap,
-                errorRequest,
-                placeholderResId,
-                placeholderDrawable,
-                placeholderBitmap,
-                fallbackResId,
-                fallbackDrawable,
-                fallbackBitmap,
-                requestListener,
-                thumbnailSizeMultiplier,
-                thumbnailRequestBuilder,
-                transitionOptions,
-                transformOptions,
-                scale,
-                overrideWidth,
-                overrideHeight,
-                downsampleStrategy,
-                encodeFormat,
-                encodeQuality,
-                dontAnimate,
-                dontTransform,
-                clone,
-                autoClone,
-                decodeClass,
-                diskCacheStrategy,
-                disallowHardwareConfig,
-                requestOptions
+            errorResId,
+            errorDrawable,
+            errorBitmap,
+            errorRequest,
+            placeholderResId,
+            placeholderDrawable,
+            placeholderBitmap,
+            placeholderScaleMax,
+            placeholderScaleSize,
+            placeholderScaleByWidth,
+            fallbackResId,
+            fallbackDrawable,
+            fallbackBitmap,
+            requestListener,
+            thumbnailSizeMultiplier,
+            thumbnailRequestBuilder,
+            transitionOptions,
+            transformOptions,
+            scale,
+            overrideWidth,
+            overrideHeight,
+            downsampleStrategy,
+            encodeFormat,
+            encodeQuality,
+            dontAnimate,
+            dontTransform,
+            clone,
+            autoClone,
+            decodeClass,
+            diskCacheStrategy,
+            disallowHardwareConfig,
+            requestOptions
         )
     }
 
     companion object {
-        @JvmStatic inline fun <reified ResourceType> with(context: Context): Loader<ResourceType> = Request<ResourceType>(context).`as`(ResourceType::class.java)
-        @JvmStatic inline fun <reified ResourceType> with(activity: Activity): Loader<ResourceType> = Request<ResourceType>(activity).`as`(ResourceType::class.java)
-        @JvmStatic inline fun <reified ResourceType> with(fragment: Fragment): Loader<ResourceType> = Request<ResourceType>(fragment).`as`(ResourceType::class.java)
-        @JvmStatic inline fun <reified ResourceType> with(view: View): Loader<ResourceType> = Request<ResourceType>(view).`as`(ResourceType::class.java)
-        @JvmStatic inline fun <reified ResourceType> with(fragmentActivity: FragmentActivity): Loader<ResourceType> = Request<ResourceType>(fragmentActivity).`as`(ResourceType::class.java)
+        @JvmStatic
+        inline fun <reified ResourceType> with(context: Context): Loader<ResourceType> =
+            Request<ResourceType>(context).`as`(ResourceType::class.java)
 
-        @JvmStatic fun withAsDrawable(context: Context): Loader<Drawable> = Request<Drawable>(context).asDrawable()
-        @JvmStatic fun withAsDrawable(activity: Activity): Loader<Drawable> = Request<Drawable>(activity).asDrawable()
-        @JvmStatic fun withAsDrawable(fragment: Fragment): Loader<Drawable> = Request<Drawable>(fragment).asDrawable()
-        @JvmStatic fun withAsDrawable(view: View): Loader<Drawable> = Request<Drawable>(view).asDrawable()
-        @JvmStatic fun withAsDrawable(fragmentActivity: FragmentActivity): Loader<Drawable> = Request<Drawable>(fragmentActivity).asDrawable()
+        @JvmStatic
+        inline fun <reified ResourceType> with(activity: Activity): Loader<ResourceType> =
+            Request<ResourceType>(activity).`as`(ResourceType::class.java)
 
-        @JvmStatic fun withAsBitmap(context: Context): Loader<Bitmap> = Request<Bitmap>(context).asBitmap()
-        @JvmStatic fun withAsBitmap(activity: Activity): Loader<Bitmap> = Request<Bitmap>(activity).asBitmap()
-        @JvmStatic fun withAsBitmap(fragment: Fragment): Loader<Bitmap> = Request<Bitmap>(fragment).asBitmap()
-        @JvmStatic fun withAsBitmap(view: View): Loader<Bitmap> = Request<Bitmap>(view).asBitmap()
-        @JvmStatic fun withAsBitmap(fragmentActivity: FragmentActivity): Loader<Bitmap> = Request<Bitmap>(fragmentActivity).asBitmap()
+        @JvmStatic
+        inline fun <reified ResourceType> with(fragment: Fragment): Loader<ResourceType> =
+            Request<ResourceType>(fragment).`as`(ResourceType::class.java)
 
-        @JvmStatic fun withAsFile(context: Context): Loader<File> = Request<File>(context).asFile()
-        @JvmStatic fun withAsFile(activity: Activity): Loader<File> = Request<File>(activity).asFile()
-        @JvmStatic fun withAsFile(fragment: Fragment): Loader<File> = Request<File>(fragment).asFile()
-        @JvmStatic fun withAsFile(view: View): Loader<File> = Request<File>(view).asFile()
-        @JvmStatic fun withAsFile(fragmentActivity: FragmentActivity): Loader<File> = Request<File>(fragmentActivity).asFile()
+        @JvmStatic
+        inline fun <reified ResourceType> with(view: View): Loader<ResourceType> =
+            Request<ResourceType>(view).`as`(ResourceType::class.java)
 
-        @JvmStatic fun withAsGif(context: Context): Loader<GifDrawable> = Request<GifDrawable>(context).asGif()
-        @JvmStatic fun withAsGif(activity: Activity): Loader<GifDrawable> = Request<GifDrawable>(activity).asGif()
-        @JvmStatic fun withAsGif(fragment: Fragment): Loader<GifDrawable> = Request<GifDrawable>(fragment).asGif()
-        @JvmStatic fun withAsGif(view: View): Loader<GifDrawable> = Request<GifDrawable>(view).asGif()
-        @JvmStatic fun withAsGif(fragmentActivity: FragmentActivity): Loader<GifDrawable> = Request<File>(fragmentActivity).asGif()
+        @JvmStatic
+        inline fun <reified ResourceType> with(fragmentActivity: FragmentActivity): Loader<ResourceType> =
+            Request<ResourceType>(fragmentActivity).`as`(ResourceType::class.java)
+
+        @JvmStatic
+        fun withAsDrawable(context: Context): Loader<Drawable> =
+            Request<Drawable>(context).asDrawable()
+
+        @JvmStatic
+        fun withAsDrawable(activity: Activity): Loader<Drawable> =
+            Request<Drawable>(activity).asDrawable()
+
+        @JvmStatic
+        fun withAsDrawable(fragment: Fragment): Loader<Drawable> =
+            Request<Drawable>(fragment).asDrawable()
+
+        @JvmStatic
+        fun withAsDrawable(view: View): Loader<Drawable> = Request<Drawable>(view).asDrawable()
+        @JvmStatic
+        fun withAsDrawable(fragmentActivity: FragmentActivity): Loader<Drawable> =
+            Request<Drawable>(fragmentActivity).asDrawable()
+
+        @JvmStatic
+        fun withAsBitmap(context: Context): Loader<Bitmap> = Request<Bitmap>(context).asBitmap()
+        @JvmStatic
+        fun withAsBitmap(activity: Activity): Loader<Bitmap> = Request<Bitmap>(activity).asBitmap()
+        @JvmStatic
+        fun withAsBitmap(fragment: Fragment): Loader<Bitmap> = Request<Bitmap>(fragment).asBitmap()
+        @JvmStatic
+        fun withAsBitmap(view: View): Loader<Bitmap> = Request<Bitmap>(view).asBitmap()
+        @JvmStatic
+        fun withAsBitmap(fragmentActivity: FragmentActivity): Loader<Bitmap> =
+            Request<Bitmap>(fragmentActivity).asBitmap()
+
+        @JvmStatic
+        fun withAsFile(context: Context): Loader<File> = Request<File>(context).asFile()
+        @JvmStatic
+        fun withAsFile(activity: Activity): Loader<File> = Request<File>(activity).asFile()
+        @JvmStatic
+        fun withAsFile(fragment: Fragment): Loader<File> = Request<File>(fragment).asFile()
+        @JvmStatic
+        fun withAsFile(view: View): Loader<File> = Request<File>(view).asFile()
+        @JvmStatic
+        fun withAsFile(fragmentActivity: FragmentActivity): Loader<File> =
+            Request<File>(fragmentActivity).asFile()
+
+        @JvmStatic
+        fun withAsGif(context: Context): Loader<GifDrawable> = Request<GifDrawable>(context).asGif()
+        @JvmStatic
+        fun withAsGif(activity: Activity): Loader<GifDrawable> =
+            Request<GifDrawable>(activity).asGif()
+
+        @JvmStatic
+        fun withAsGif(fragment: Fragment): Loader<GifDrawable> =
+            Request<GifDrawable>(fragment).asGif()
+
+        @JvmStatic
+        fun withAsGif(view: View): Loader<GifDrawable> = Request<GifDrawable>(view).asGif()
+        @JvmStatic
+        fun withAsGif(fragmentActivity: FragmentActivity): Loader<GifDrawable> =
+            Request<File>(fragmentActivity).asGif()
     }
 }

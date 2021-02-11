@@ -2,12 +2,15 @@ package de.datlag.coilifier
 
 import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.widget.ImageView
+import androidx.core.graphics.drawable.toBitmap
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.request.target.Target
+import de.datlag.coilifier.commons.scale
 import java.io.File
 
 class Loader<ResourceType>(
@@ -50,11 +53,38 @@ class Loader<ResourceType>(
                 helper.errorBitmap != null -> error(BitmapDrawable(resources, helper.errorBitmap))
                 helper.errorRequest != null -> error(helper.errorRequest)
             }
-            when {
-                helper.placeholderResId != null && helper.placeholderResId != 0 -> placeholder(helper.placeholderResId)
-                helper.placeholderDrawable != null -> placeholder(helper.placeholderDrawable)
-                helper.placeholderBitmap != null -> placeholder(BitmapDrawable(resources, helper.placeholderBitmap))
+            if (helper.placeholderScaleMax) {
+                val scaleBitmap = when {
+                    helper.placeholderResId != null && helper.placeholderResId != 0 -> BitmapFactory.decodeResource(resources, helper.placeholderResId)
+                    helper.placeholderDrawable != null -> helper.placeholderDrawable.toBitmap()
+                    helper.placeholderBitmap != null -> helper.placeholderBitmap
+                    else -> null
+                }
+                if (helper.placeholderScaleSize != null && helper.placeholderScaleByWidth != null) {
+                    placeholder(BitmapDrawable(resources, scaleBitmap?.scale(helper.placeholderScaleSize, helper.placeholderScaleByWidth)))
+                } else {
+                    val maxWidthPixel: Int? = resources?.displayMetrics?.widthPixels
+                    val maxHeightPixel: Int? = resources?.displayMetrics?.heightPixels
+                    when {
+                        maxWidthPixel != null -> {
+                            placeholder(BitmapDrawable(resources, scaleBitmap?.scale(maxWidthPixel, true)))
+                        }
+                        maxHeightPixel != null -> {
+                            placeholder(BitmapDrawable(resources, scaleBitmap?.scale(maxHeightPixel, false)))
+                        }
+                        else -> {
+                            placeholder(BitmapDrawable(resources, scaleBitmap))
+                        }
+                    }
+                }
+            } else {
+                when {
+                    helper.placeholderResId != null && helper.placeholderResId != 0 -> placeholder(helper.placeholderResId)
+                    helper.placeholderDrawable != null -> placeholder(helper.placeholderDrawable)
+                    helper.placeholderBitmap != null -> placeholder(BitmapDrawable(resources, helper.placeholderBitmap))
+                }
             }
+
             when {
                 helper.fallbackResId != null && helper.fallbackResId != 0 -> fallback(helper.fallbackResId)
                 helper.fallbackDrawable != null -> fallback(helper.fallbackDrawable)

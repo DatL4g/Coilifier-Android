@@ -29,9 +29,7 @@ data class Coilifier<ResourceType> internal constructor(
     @DrawableRes val placeholderResId: Int?,
     val placeholderDrawable: Drawable?,
     val placeholderBitmap: Bitmap?,
-    val placeholderScaleMax: Boolean,
-    val placeholderScaleSize: Int?,
-    val placeholderScaleByWidth: Boolean?,
+    val placeholderScaling: PlaceholderScaling?,
     @DrawableRes val fallbackResId: Int?,
     val fallbackDrawable: Drawable?,
     val fallbackBitmap: Bitmap?,
@@ -67,9 +65,7 @@ data class Coilifier<ResourceType> internal constructor(
         private var placeholderResId: Int? = null
         private var placeholderDrawable: Drawable? = null
         private var placeholderBitmap: Bitmap? = null
-        private var placeholderScaleMax: Boolean = false
-        private var placeholderScaleSize: Int? = null
-        private var placeholderScaleByWidth: Boolean? = null
+        private var placeholderScaling: PlaceholderScaling? = null
 
         @DrawableRes
         private var fallbackResId: Int? = null
@@ -164,177 +160,71 @@ data class Coilifier<ResourceType> internal constructor(
             this.errorRequest = null
         }
 
-        fun placeholder(@DrawableRes drawableResId: Int, scaleMax: Boolean = false) = apply {
+        fun placeholder(@DrawableRes drawableResId: Int, scaling: PlaceholderScaling? = null) = apply {
             this.placeholderResId = drawableResId
             this.placeholderDrawable = null
             this.placeholderBitmap = null
-            this.placeholderScaleMax = scaleMax
-            this.placeholderScaleSize = null
-            this.placeholderScaleByWidth = null
+            this.placeholderScaling = scaling
         }
 
-        fun placeholder(@DrawableRes drawableResId: Int, size: Int?, byWidth: Boolean) = apply {
-            this.placeholderResId = drawableResId
-            this.placeholderDrawable = null
-            this.placeholderBitmap = null
-            this.placeholderScaleMax = true
-            this.placeholderScaleSize = size
-            this.placeholderScaleByWidth = byWidth
-        }
-
-        fun placeholder(@DrawableRes drawableResId: Int, view: View, byWidth: Boolean) = apply {
-            placeholder(drawableResId, viewSize(view, byWidth), byWidth)
-        }
-
-        fun placeholder(drawable: Drawable?, scaleMax: Boolean = false) = apply {
+        fun placeholder(drawable: Drawable?, scaling: PlaceholderScaling? = null) = apply {
             if (drawable is BitmapDrawable) {
                 if (drawable.bitmap.isRecycled) return@apply
             }
             this.placeholderDrawable = drawable
             this.placeholderResId = 0
             this.placeholderBitmap = null
-            this.placeholderScaleMax = scaleMax
-            this.placeholderScaleSize = null
-            this.placeholderScaleByWidth = null
+            this.placeholderScaling = scaling
         }
 
-        fun placeholder(drawable: Drawable?, size: Int?, byWidth: Boolean) = apply {
-            if (drawable is BitmapDrawable) {
-                if (drawable.bitmap.isRecycled) return@apply
-            }
-            this.placeholderDrawable = drawable
-            this.placeholderResId = 0
-            this.placeholderBitmap = null
-            this.placeholderScaleMax = true
-            this.placeholderScaleSize = size
-            this.placeholderScaleByWidth = byWidth
-        }
-
-        fun placeholder(drawable: Drawable?, view: View, byWidth: Boolean) = apply {
-            placeholder(drawable, viewSize(view, byWidth), byWidth)
-        }
-
-        fun placeholder(bitmap: Bitmap?, scaleMax: Boolean = false) = apply {
+        fun placeholder(bitmap: Bitmap?, scaling: PlaceholderScaling? = null) = apply {
             if (bitmap?.isRecycled == true) return@apply
             this.placeholderBitmap = bitmap
             this.placeholderResId = 0
             this.placeholderDrawable = null
-            this.placeholderScaleMax = scaleMax
-            this.placeholderScaleSize = null
-            this.placeholderScaleByWidth = null
+            this.placeholderScaling = scaling
         }
 
-        fun placeholder(bitmap: Bitmap?, size: Int?, byWidth: Boolean) = apply {
-            if (bitmap?.isRecycled == true) return@apply
-            this.placeholderBitmap = bitmap
-            this.placeholderResId = 0
-            this.placeholderDrawable = null
-            this.placeholderScaleMax = true
-            this.placeholderScaleSize = size
-            this.placeholderScaleByWidth = byWidth
-        }
-
-        fun placeholder(bitmap: Bitmap?, view: View, byWidth: Boolean) = apply {
-            placeholder(bitmap, viewSize(view, byWidth), byWidth)
-        }
-
-        fun placeholder(view: View?, scaleMax: Boolean = false) = when (view) {
+        fun placeholder(view: View?, scaling: PlaceholderScaling? = null) = when (view) {
             is ImageView -> {
                 val bitmap = view.getBitmap()
                 if (bitmap != null) {
-                    placeholder(bitmap, scaleMax)
+                    placeholder(bitmap, scaling)
                 } else {
-                    placeholder(view.drawable, scaleMax)
+                    placeholder(view.drawable, scaling)
                 }
             }
             null -> clearPlaceholder()
-            else -> placeholder(view.getBitmap(), scaleMax)
+            else -> placeholder(view.getBitmap(), scaling)
         }
-
-        fun placeholder(view: View?, size: Int?, byWidth: Boolean) = when (view) {
+    
+        fun placeholder(view: View?, scaleByWidth: Boolean?) = when (view) {
             is ImageView -> {
                 val bitmap = view.getBitmap()
                 if (bitmap != null) {
-                    placeholder(bitmap, size, byWidth)
+                    placeholder(bitmap, PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
                 } else {
-                    placeholder(view.drawable, size, byWidth)
+                    placeholder(view.drawable, PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
                 }
             }
             null -> clearPlaceholder()
-            else -> placeholder(view.getBitmap(), size, byWidth)
+            else -> placeholder(view.getBitmap(), PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
         }
 
-        fun placeholder(view: View?, viewSize: View, byWidth: Boolean) = apply {
-            placeholder(view, viewSize(viewSize, byWidth), byWidth)
-        }
-
-        fun placeholder(any: Any?, scaleMax: Boolean = false) = when (any) {
-            is Int -> placeholder(any, scaleMax)
-            is Drawable -> placeholder(any, scaleMax)
-            is Bitmap -> placeholder(any, scaleMax)
-            is View -> placeholder(any, scaleMax)
+        fun placeholder(any: Any?, scaling: PlaceholderScaling? = null) = when (any) {
+            is Int -> placeholder(any, scaling)
+            is Drawable -> placeholder(any, scaling)
+            is Bitmap -> placeholder(any, scaling)
+            is View -> placeholder(any, scaling)
             null -> clearPlaceholder()
             else -> this
-        }
-
-        fun placeholder(any: Any?, size: Int?, byWidth: Boolean) = when (any) {
-            is Int -> placeholder(any, size, byWidth)
-            is Drawable -> placeholder(any, size, byWidth)
-            is Bitmap -> placeholder(any, size, byWidth)
-            is View -> placeholder(any, size, byWidth)
-            null -> clearPlaceholder()
-            else -> this
-        }
-
-        fun placeholder(any: Any?, viewSize: View, byWidth: Boolean) = apply {
-            placeholder(any, viewSize(viewSize, byWidth), byWidth)
-        }
-
-        private fun sizeValid(value: Int?): Boolean {
-            return value == null || value <= 0
-        }
-
-        private fun viewSize(view: View, byWidth: Boolean): Int? {
-            return if (byWidth) {
-                when {
-                    sizeValid(view.width) -> {
-                        view.width
-                    }
-                    sizeValid(view.measuredWidth) -> {
-                        view.measuredWidth
-                    }
-                    sizeValid(view.minimumWidth) -> {
-                        view.minimumWidth
-                    }
-                    else -> {
-                        null
-                    }
-                }
-            } else {
-                when {
-                    sizeValid(view.height) -> {
-                        view.height
-                    }
-                    sizeValid(view.measuredHeight) -> {
-                        view.measuredHeight
-                    }
-                    sizeValid(view.minimumHeight) -> {
-                        view.minimumHeight
-                    }
-                    else -> {
-                        null
-                    }
-                }
-            }
         }
 
         private fun clearPlaceholder() = apply {
             this.placeholderBitmap = null
             this.placeholderDrawable = null
             this.placeholderResId = 0
-            this.placeholderScaleMax = false
-            this.placeholderScaleSize = null
-            this.placeholderScaleByWidth = null
+            this.placeholderScaling = null
         }
 
         fun fallback(@DrawableRes drawableResId: Int) = apply {
@@ -526,9 +416,7 @@ data class Coilifier<ResourceType> internal constructor(
             placeholderResId,
             placeholderDrawable,
             placeholderBitmap,
-            placeholderScaleMax,
-            placeholderScaleSize,
-            placeholderScaleByWidth,
+            placeholderScaling,
             fallbackResId,
             fallbackDrawable,
             fallbackBitmap,

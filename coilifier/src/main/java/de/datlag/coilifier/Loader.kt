@@ -53,15 +53,15 @@ class Loader<ResourceType>(
                 helper.errorBitmap != null -> error(BitmapDrawable(resources, helper.errorBitmap))
                 helper.errorRequest != null -> error(helper.errorRequest)
             }
-            if (helper.placeholderScaleMax) {
+            if (helper.placeholderScaling != null && helper.placeholderScaling.max) {
                 val scaleBitmap = when {
                     helper.placeholderResId != null && helper.placeholderResId != 0 -> BitmapFactory.decodeResource(resources, helper.placeholderResId)
                     helper.placeholderDrawable != null -> helper.placeholderDrawable.toBitmap()
                     helper.placeholderBitmap != null -> helper.placeholderBitmap
                     else -> null
                 }
-                if (helper.placeholderScaleSize != null && helper.placeholderScaleByWidth != null) {
-                    placeholder(BitmapDrawable(resources, scaleBitmap?.scale(helper.placeholderScaleSize, helper.placeholderScaleByWidth)))
+                if (helper.placeholderScaling.size != null && helper.placeholderScaling.scaleByWidth != null) {
+                    placeholder(BitmapDrawable(resources, scaleBitmap?.scale(helper.placeholderScaling.size, helper.placeholderScaling.scaleByWidth)))
                 } else {
                     val maxWidthPixel: Int? = resources?.displayMetrics?.widthPixels
                     val maxHeightPixel: Int? = resources?.displayMetrics?.heightPixels

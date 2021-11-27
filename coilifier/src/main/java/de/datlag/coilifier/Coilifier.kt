@@ -18,6 +18,8 @@ import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.BaseRequestOptions
 import com.bumptech.glide.request.RequestListener
+import de.datlag.coilifier.commons.blurHeight
+import de.datlag.coilifier.commons.blurWidth
 import de.datlag.coilifier.commons.getBitmap
 import java.io.File
 
@@ -107,6 +109,7 @@ data class Coilifier<ResourceType> internal constructor(
 
         fun error(drawable: Drawable?) = apply {
             if (drawable is BitmapDrawable) {
+                if (drawable.bitmap == null) return@apply
                 if (drawable.bitmap.isRecycled) return@apply
             }
             this.errorDrawable = drawable
@@ -143,6 +146,30 @@ data class Coilifier<ResourceType> internal constructor(
             this.errorRequest = requestBuilder
         }
 
+        fun error(blurString: String, width: Int, height: Int, blurHash: BlurHash) = apply {
+            if (width > 0 && height > 0) {
+                error(blurHash.execute(blurString, width, height))
+            }
+        }
+
+        @JvmOverloads
+        fun error(blurString: String, view: View, blurHash: BlurHash = BlurHash(view.context)) = apply {
+            val width = view.blurWidth
+            val height = view.blurHeight
+
+            if (width != null && height != null) {
+                error(blurString, width, height, blurHash)
+            } else if (width != null && height == null) {
+                error(blurString, width, width, blurHash)
+            } else if (width == null && height != null) {
+                error(blurString, height, height, blurHash)
+            } else {
+                view.post {
+                    error(blurString, view.blurWidth ?: 0, view.blurHeight ?: 0, blurHash)
+                }
+            }
+        }
+
         fun error(any: Any?): Builder<ResourceType> = when (any) {
             is Int -> error(any)
             is Drawable -> error(any)
@@ -160,6 +187,7 @@ data class Coilifier<ResourceType> internal constructor(
             this.errorRequest = null
         }
 
+        @JvmOverloads
         fun placeholder(@DrawableRes drawableResId: Int, scaling: PlaceholderScaling? = null) = apply {
             this.placeholderResId = drawableResId
             this.placeholderDrawable = null
@@ -167,8 +195,10 @@ data class Coilifier<ResourceType> internal constructor(
             this.placeholderScaling = scaling
         }
 
+        @JvmOverloads
         fun placeholder(drawable: Drawable?, scaling: PlaceholderScaling? = null) = apply {
             if (drawable is BitmapDrawable) {
+                if (drawable.bitmap == null) return@apply
                 if (drawable.bitmap.isRecycled) return@apply
             }
             this.placeholderDrawable = drawable
@@ -177,6 +207,7 @@ data class Coilifier<ResourceType> internal constructor(
             this.placeholderScaling = scaling
         }
 
+        @JvmOverloads
         fun placeholder(bitmap: Bitmap?, scaling: PlaceholderScaling? = null) = apply {
             if (bitmap?.isRecycled == true) return@apply
             this.placeholderBitmap = bitmap
@@ -185,6 +216,7 @@ data class Coilifier<ResourceType> internal constructor(
             this.placeholderScaling = scaling
         }
 
+        @JvmOverloads
         fun placeholder(view: View?, scaling: PlaceholderScaling? = null) = when (view) {
             is ImageView -> {
                 val bitmap = view.getBitmap()
@@ -197,7 +229,7 @@ data class Coilifier<ResourceType> internal constructor(
             null -> clearPlaceholder()
             else -> placeholder(view.getBitmap(), scaling)
         }
-    
+
         fun placeholder(view: View?, scaleByWidth: Boolean?) = when (view) {
             is ImageView -> {
                 val bitmap = view.getBitmap()
@@ -211,6 +243,32 @@ data class Coilifier<ResourceType> internal constructor(
             else -> placeholder(view.getBitmap(), PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
         }
 
+        @JvmOverloads
+        fun placeholder(blurString: String, width: Int, height: Int, blurHash: BlurHash, scaling: PlaceholderScaling? = null) = apply {
+            if (width > 0 && height > 0) {
+                placeholder(blurHash.execute(blurString, width, height), scaling)
+            }
+        }
+
+        @JvmOverloads
+        fun placeholder(blurString: String, view: View, blurHash: BlurHash = BlurHash(view.context), scaling: PlaceholderScaling? = null) = apply {
+            val width = view.blurWidth
+            val height = view.blurHeight
+
+            if (width != null && height != null) {
+                placeholder(blurString, width, height, blurHash, scaling)
+            } else if (width != null && height == null) {
+                placeholder(blurString, width, width, blurHash, scaling)
+            } else if (width == null && height != null) {
+                placeholder(blurString, height, height, blurHash, scaling)
+            } else {
+                view.post {
+                    placeholder(blurString, view.blurWidth ?: 0, view.blurHeight ?: 0, blurHash, scaling)
+                }
+            }
+        }
+
+        @JvmOverloads
         fun placeholder(any: Any?, scaling: PlaceholderScaling? = null) = when (any) {
             is Int -> placeholder(any, scaling)
             is Drawable -> placeholder(any, scaling)
@@ -235,6 +293,7 @@ data class Coilifier<ResourceType> internal constructor(
 
         fun fallback(drawable: Drawable?) = apply {
             if (drawable is BitmapDrawable) {
+                if (drawable.bitmap == null) return@apply
                 if (drawable.bitmap.isRecycled) return@apply
             }
             this.fallbackDrawable = drawable
@@ -260,6 +319,30 @@ data class Coilifier<ResourceType> internal constructor(
             }
             null -> clearFallback()
             else -> fallback(view.getBitmap())
+        }
+
+        fun fallback(blurString: String, width: Int, height: Int, blurHash: BlurHash) = apply {
+            if (width > 0 && height > 0) {
+                fallback(blurHash.execute(blurString, width, height))
+            }
+        }
+
+        @JvmOverloads
+        fun fallback(blurString: String, view: View, blurHash: BlurHash = BlurHash(view.context)) = apply {
+            val width = view.blurWidth
+            val height = view.blurHeight
+
+            if (width != null && height != null) {
+                fallback(blurString, width, height, blurHash)
+            } else if (width != null && height == null) {
+                fallback(blurString, width, width, blurHash)
+            } else if (width == null && height != null) {
+                fallback(blurString, height, height, blurHash)
+            } else {
+                view.post {
+                    fallback(blurString, view.blurWidth ?: 0, view.blurHeight ?: 0, blurHash)
+                }
+            }
         }
 
         fun fallback(any: Any?) = when (any) {

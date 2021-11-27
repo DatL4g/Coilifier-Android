@@ -1,5 +1,6 @@
 package de.datlag.coilifier
 
+import android.annotation.SuppressLint
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -20,6 +21,7 @@ class Loader<ResourceType>(
 
     private lateinit var appliedRequestBuilder: RequestBuilder<ResourceType>
 
+    @SuppressLint("CheckResult")
     @JvmOverloads
     fun load(any: Any?, builder: Coilifier.Builder<ResourceType>.() -> Unit = {}): Loader<ResourceType> {
         val helper = Coilifier.Builder<ResourceType>().apply(builder).build()
@@ -42,6 +44,7 @@ class Loader<ResourceType>(
         return this
     }
 
+    @SuppressLint("CheckResult")
     private fun loadData(helper: Coilifier<ResourceType>) {
         appliedRequestBuilder.apply {
             if (helper.disallowHardwareConfig) {

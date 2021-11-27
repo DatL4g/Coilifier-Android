@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
 
         val image = findViewById<ImageView>(R.id.image)
         image.load<Drawable>("https://avatars2.githubusercontent.com/u/46448715") {
-            error(R.mipmap.ic_launcher)
+            error("LRMz]^i{{is.xue.S4f6{ijFE1WB", image)
             placeholder(R.mipmap.ic_launcher, PlaceholderScaling.fitCenter())
             transform(RoundedCorners(150))
         }

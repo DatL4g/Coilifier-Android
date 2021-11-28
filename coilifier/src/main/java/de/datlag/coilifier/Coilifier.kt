@@ -100,6 +100,31 @@ data class Coilifier<ResourceType> internal constructor(
         private var disallowHardwareConfig: Boolean = false
         private var requestOptions: BaseRequestOptions<*>? = null
 
+        private var blurHash: BlurHash? = null
+
+        fun blurHash(blurHash: BlurHash) = apply {
+            this.blurHash = blurHash
+        }
+
+        private fun getNewBlurHash(newBlurHash: BlurHash? = this.blurHash): BlurHash {
+            return when {
+                blurHash == null && newBlurHash != null -> {
+                    blurHash = newBlurHash
+                    blurHash!!
+                }
+                blurHash != null && newBlurHash == null -> {
+                    blurHash!!
+                }
+                blurHash == null && newBlurHash == null -> {
+                    throw IllegalArgumentException("No BlurHash provided, use the blurHash(...) builder method (At the very top) or pass it in the function.")
+                }
+                blurHash?.isSame(newBlurHash) == true -> {
+                    blurHash!!
+                }
+                else -> newBlurHash ?: this.blurHash!!
+            }
+        }
+
         fun error(@DrawableRes drawableResId: Int) = apply {
             this.errorResId = drawableResId
             this.errorDrawable = null
@@ -148,12 +173,16 @@ data class Coilifier<ResourceType> internal constructor(
 
         fun error(blurString: String, width: Int, height: Int, blurHash: BlurHash) = apply {
             if (width > 0 && height > 0) {
-                error(blurHash.execute(blurString, width, height))
+                error(getNewBlurHash(blurHash).execute(blurString, width, height))
             }
         }
 
+        fun error(blurString: String, width: Int, height: Int) = apply {
+            error(blurString, width, height, getNewBlurHash())
+        }
+
         @JvmOverloads
-        fun error(blurString: String, view: View, blurHash: BlurHash = BlurHash(view.context)) = apply {
+        fun error(blurString: String, view: View, blurHash: BlurHash = this.blurHash ?: BlurHash(view.context)) = apply {
             val width = view.blurWidth
             val height = view.blurHeight
 
@@ -246,12 +275,17 @@ data class Coilifier<ResourceType> internal constructor(
         @JvmOverloads
         fun placeholder(blurString: String, width: Int, height: Int, blurHash: BlurHash, scaling: PlaceholderScaling? = null) = apply {
             if (width > 0 && height > 0) {
-                placeholder(blurHash.execute(blurString, width, height), scaling)
+                placeholder(getNewBlurHash(blurHash).execute(blurString, width, height), scaling)
             }
         }
 
         @JvmOverloads
-        fun placeholder(blurString: String, view: View, blurHash: BlurHash = BlurHash(view.context), scaling: PlaceholderScaling? = null) = apply {
+        fun placeholder(blurString: String, width: Int, height: Int, scaling: PlaceholderScaling? = null) = apply {
+            placeholder(blurString, width, height, getNewBlurHash(), scaling)
+        }
+
+        @JvmOverloads
+        fun placeholder(blurString: String, view: View, blurHash: BlurHash = this.blurHash ?: BlurHash(view.context), scaling: PlaceholderScaling? = null) = apply {
             val width = view.blurWidth
             val height = view.blurHeight
 
@@ -323,12 +357,16 @@ data class Coilifier<ResourceType> internal constructor(
 
         fun fallback(blurString: String, width: Int, height: Int, blurHash: BlurHash) = apply {
             if (width > 0 && height > 0) {
-                fallback(blurHash.execute(blurString, width, height))
+                fallback(getNewBlurHash(blurHash).execute(blurString, width, height))
             }
         }
 
+        fun fallback(blurString: String, width: Int, height: Int) = apply {
+            fallback(blurString, width, height, getNewBlurHash())
+        }
+
         @JvmOverloads
-        fun fallback(blurString: String, view: View, blurHash: BlurHash = BlurHash(view.context)) = apply {
+        fun fallback(blurString: String, view: View, blurHash: BlurHash = this.blurHash ?: BlurHash(view.context)) = apply {
             val width = view.blurWidth
             val height = view.blurHeight
 

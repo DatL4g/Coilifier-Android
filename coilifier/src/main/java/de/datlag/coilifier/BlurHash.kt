@@ -7,9 +7,9 @@ import android.util.LruCache
 const val LUR_SIZE = 10
 
 class BlurHash(
-    private var context: Context,
-    lruSize: Int = LUR_SIZE,
-    private var punch: Float = 1F
+    private val context: Context,
+    val lruSize: Int = LUR_SIZE,
+    val punch: Float = 1F
 ) {
     private var data: LruCache<String, BitmapDrawable> = LruCache(lruSize)
 
@@ -45,5 +45,9 @@ class BlurHash(
 
     private fun getBlurDrawable(blurString: String): BitmapDrawable? {
         return data.get(blurString)
+    }
+
+    fun isSame(other: BlurHash?): Boolean {
+        return other != null && (this == other || (this.lruSize == other.lruSize && this.punch == other.punch))
     }
 }

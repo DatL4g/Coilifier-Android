@@ -8,7 +8,12 @@ internal fun Bitmap.scale(wantedSize: Int, byWidth: Boolean): Bitmap {
     val scaledWidth = (scaleWidthFactor * wantedSize).toInt()
     val scaledHeight = (scaleHeightFactor * wantedSize).toInt()
     return try {
-        Bitmap.createScaledBitmap(this, scaledWidth, scaledHeight, true)
+        val bitmap = Bitmap.createScaledBitmap(this, scaledWidth, scaledHeight, true)
+        if (bitmap.isValid()) {
+            bitmap
+        } else {
+            this
+        }
     } catch (ignored: Exception) {
         this
     }

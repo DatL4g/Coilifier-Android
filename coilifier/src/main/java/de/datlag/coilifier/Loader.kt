@@ -7,10 +7,13 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.view.View
 import android.widget.ImageView
 import androidx.core.graphics.drawable.toBitmap
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.request.target.Target
+import de.datlag.coilifier.commons.getBitmap
+import de.datlag.coilifier.commons.isValid
 import de.datlag.coilifier.commons.scale
 import java.io.File
 
@@ -31,13 +34,27 @@ class Loader<ResourceType>(
             requestBuilder
         }
         when (any) {
-            is Bitmap -> appliedRequestBuilder.apply { load(any) }
+            is Bitmap -> appliedRequestBuilder.apply {
+                if (any.isValid()) {
+                    load(any)
+                } else {
+                    load(String())
+                }
+            }
             is Drawable -> appliedRequestBuilder.apply { load(any) }
             is String -> appliedRequestBuilder.apply { load(any) }
             is Int -> appliedRequestBuilder.apply { load(any) }
             is Uri -> appliedRequestBuilder.apply { load(any) }
             is File -> appliedRequestBuilder.apply { load(any) }
             is ByteArray -> appliedRequestBuilder.apply { load(any) }
+            is View -> appliedRequestBuilder.apply {
+                val bitmap = any.getBitmap()
+                if (bitmap.isValid()) {
+                    load(bitmap)
+                } else {
+                    load(String())
+                }
+            }
             else -> appliedRequestBuilder.apply { load(any) }
         }
         loadData(helper)
@@ -53,14 +70,21 @@ class Loader<ResourceType>(
             when {
                 helper.errorResId != null && helper.errorResId != 0 -> error(helper.errorResId)
                 helper.errorDrawable != null -> error(helper.errorDrawable)
-                helper.errorBitmap != null -> error(BitmapDrawable(resources, helper.errorBitmap))
+                helper.errorBitmap != null && helper.errorBitmap.isValid() -> error(BitmapDrawable(resources, helper.errorBitmap))
                 helper.errorRequest != null -> error(helper.errorRequest)
             }
             if (helper.placeholderScaling != null && helper.placeholderScaling.max) {
                 val scaleBitmap = when {
                     helper.placeholderResId != null && helper.placeholderResId != 0 -> BitmapFactory.decodeResource(resources, helper.placeholderResId)
-                    helper.placeholderDrawable != null -> helper.placeholderDrawable.toBitmap()
-                    helper.placeholderBitmap != null -> helper.placeholderBitmap
+                    helper.placeholderDrawable != null -> try {
+                        val bitmap = helper.placeholderDrawable.toBitmap()
+                        if (bitmap.isValid()) {
+                            bitmap
+                        } else {
+                            null
+                        }
+                    } catch (ignored: Exception) { null }
+                    helper.placeholderBitmap != null && helper.placeholderBitmap.isValid() -> helper.placeholderBitmap
                     else -> null
                 }
                 if (helper.placeholderScaling.size != null && helper.placeholderScaling.scaleByWidth != null) {
@@ -84,14 +108,14 @@ class Loader<ResourceType>(
                 when {
                     helper.placeholderResId != null && helper.placeholderResId != 0 -> placeholder(helper.placeholderResId)
                     helper.placeholderDrawable != null -> placeholder(helper.placeholderDrawable)
-                    helper.placeholderBitmap != null -> placeholder(BitmapDrawable(resources, helper.placeholderBitmap))
+                    helper.placeholderBitmap != null && helper.placeholderBitmap.isValid() -> placeholder(BitmapDrawable(resources, helper.placeholderBitmap))
                 }
             }
 
             when {
                 helper.fallbackResId != null && helper.fallbackResId != 0 -> fallback(helper.fallbackResId)
                 helper.fallbackDrawable != null -> fallback(helper.fallbackDrawable)
-                helper.fallbackBitmap != null -> fallback(BitmapDrawable(resources, helper.fallbackBitmap))
+                helper.fallbackBitmap != null && helper.fallbackBitmap.isValid() -> fallback(BitmapDrawable(resources, helper.fallbackBitmap))
             }
             if (helper.requestListener.isNotEmpty()) {
                 helper.requestListener.forEach {

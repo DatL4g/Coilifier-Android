@@ -17,12 +17,18 @@ internal fun View.getBitmap(): Bitmap? {
             null
         }
 
-        return if(drawnBitmap.isValid()) {
+        return if (drawnBitmap.isValid()) {
             drawnBitmap
         } else {
-            val bitmap = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmap)
-            this.draw(canvas)
+            val bitmap = try {
+                Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888)
+            } catch (ignored: Exception) { null }
+
+            if (bitmap != null && !bitmap.isRecycled) {
+                val canvas = Canvas(bitmap)
+                this.draw(canvas)
+            }
+
             if (bitmap.isValid()) {
                 bitmap
             } else {
@@ -35,7 +41,10 @@ internal fun View.getBitmap(): Bitmap? {
         when (this) {
             is ImageView -> {
                 try {
-                    val bitmap = this.drawable?.toBitmap()
+                    val bitmap = try {
+                        this.drawable?.toBitmap()
+                    } catch (ignored: Exception) { null }
+
                     if (bitmap.isValid()) {
                         bitmap
                     } else {
@@ -46,7 +55,10 @@ internal fun View.getBitmap(): Bitmap? {
                 }
             }
             is TextureView -> {
-                val bitmap = this.bitmap
+                val bitmap = try {
+                    this.bitmap
+                } catch (ignored: Exception) { null }
+
                 if (bitmap.isValid()) {
                     bitmap
                 } else {

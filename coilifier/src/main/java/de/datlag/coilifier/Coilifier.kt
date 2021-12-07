@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.view.TextureView
 import android.view.View
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
@@ -21,6 +22,7 @@ import com.bumptech.glide.request.RequestListener
 import de.datlag.coilifier.commons.blurHeight
 import de.datlag.coilifier.commons.blurWidth
 import de.datlag.coilifier.commons.getBitmap
+import de.datlag.coilifier.commons.isValid
 import java.io.File
 
 data class Coilifier<ResourceType> internal constructor(
@@ -134,8 +136,7 @@ data class Coilifier<ResourceType> internal constructor(
 
         fun error(drawable: Drawable?) = apply {
             if (drawable is BitmapDrawable) {
-                if (drawable.bitmap == null) return@apply
-                if (drawable.bitmap.isRecycled) return@apply
+                if (!drawable.bitmap.isValid()) return clearError()
             }
             this.errorDrawable = drawable
             this.errorResId = 0
@@ -144,7 +145,7 @@ data class Coilifier<ResourceType> internal constructor(
         }
 
         fun error(bitmap: Bitmap?) = apply {
-            if (bitmap?.isRecycled == true) return@apply
+            if (!bitmap.isValid()) return clearError()
             this.errorBitmap = bitmap
             this.errorDrawable = null
             this.errorResId = 0
@@ -157,11 +158,25 @@ data class Coilifier<ResourceType> internal constructor(
                 if (bitmap != null) {
                     error(bitmap)
                 } else {
-                    error(view.drawable)
+                    val drawable = view.drawable
+                    if (drawable != null
+                        && (drawable.intrinsicWidth == -1 || drawable.intrinsicWidth > 0)
+                        && (drawable.intrinsicHeight == -1 || drawable.intrinsicHeight > 0)) {
+                        error(drawable)
+                    } else {
+                        clearError()
+                    }
                 }
             }
             null -> clearError()
-            else -> error(view.getBitmap())
+            else -> {
+                val bitmap = view.getBitmap()
+                if (bitmap.isValid()) {
+                    error(bitmap)
+                } else {
+                    clearError()
+                }
+            }
         }
 
         fun error(requestBuilder: RequestBuilder<ResourceType>) = apply {
@@ -227,8 +242,7 @@ data class Coilifier<ResourceType> internal constructor(
         @JvmOverloads
         fun placeholder(drawable: Drawable?, scaling: PlaceholderScaling? = null) = apply {
             if (drawable is BitmapDrawable) {
-                if (drawable.bitmap == null) return@apply
-                if (drawable.bitmap.isRecycled) return@apply
+                if (!drawable.bitmap.isValid()) return clearPlaceholder()
             }
             this.placeholderDrawable = drawable
             this.placeholderResId = 0
@@ -238,7 +252,7 @@ data class Coilifier<ResourceType> internal constructor(
 
         @JvmOverloads
         fun placeholder(bitmap: Bitmap?, scaling: PlaceholderScaling? = null) = apply {
-            if (bitmap?.isRecycled == true) return@apply
+            if (!bitmap.isValid()) return clearPlaceholder()
             this.placeholderBitmap = bitmap
             this.placeholderResId = 0
             this.placeholderDrawable = null
@@ -252,11 +266,25 @@ data class Coilifier<ResourceType> internal constructor(
                 if (bitmap != null) {
                     placeholder(bitmap, scaling)
                 } else {
-                    placeholder(view.drawable, scaling)
+                    val drawable = view.drawable
+                    if (drawable != null
+                        && (drawable.intrinsicWidth == -1 || drawable.intrinsicWidth > 0)
+                        && (drawable.intrinsicHeight == -1 || drawable.intrinsicHeight > 0)) {
+                        placeholder(drawable, scaling)
+                    } else {
+                        clearPlaceholder()
+                    }
                 }
             }
             null -> clearPlaceholder()
-            else -> placeholder(view.getBitmap(), scaling)
+            else -> {
+                val bitmap = view.getBitmap()
+                if (bitmap.isValid()) {
+                    placeholder(bitmap, scaling)
+                } else {
+                    clearPlaceholder()
+                }
+            }
         }
 
         fun placeholder(view: View?, scaleByWidth: Boolean?) = when (view) {
@@ -265,11 +293,25 @@ data class Coilifier<ResourceType> internal constructor(
                 if (bitmap != null) {
                     placeholder(bitmap, PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
                 } else {
-                    placeholder(view.drawable, PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
+                    val drawable = view.drawable
+                    if (drawable != null
+                        && (drawable.intrinsicWidth == -1 || drawable.intrinsicWidth > 0)
+                        && (drawable.intrinsicHeight == -1 || drawable.intrinsicHeight > 0)) {
+                        placeholder(drawable, PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
+                    } else {
+                        clearPlaceholder()
+                    }
                 }
             }
             null -> clearPlaceholder()
-            else -> placeholder(view.getBitmap(), PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
+            else -> {
+                val bitmap = view.getBitmap()
+                if (bitmap.isValid()) {
+                    placeholder(bitmap, PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
+                } else {
+                    clearPlaceholder()
+                }
+            }
         }
 
         @JvmOverloads
@@ -327,8 +369,7 @@ data class Coilifier<ResourceType> internal constructor(
 
         fun fallback(drawable: Drawable?) = apply {
             if (drawable is BitmapDrawable) {
-                if (drawable.bitmap == null) return@apply
-                if (drawable.bitmap.isRecycled) return@apply
+                if (!drawable.bitmap.isValid()) return clearFallback()
             }
             this.fallbackDrawable = drawable
             this.fallbackResId = 0
@@ -336,7 +377,7 @@ data class Coilifier<ResourceType> internal constructor(
         }
 
         fun fallback(bitmap: Bitmap?) = apply {
-            if (bitmap?.isRecycled == true) return@apply
+            if (!bitmap.isValid()) return clearFallback()
             this.fallbackBitmap = bitmap
             this.fallbackResId = 0
             this.fallbackDrawable = null
@@ -348,11 +389,25 @@ data class Coilifier<ResourceType> internal constructor(
                 if (bitmap != null) {
                     fallback(bitmap)
                 } else {
-                    fallback(view.drawable)
+                    val drawable = view.drawable
+                    if (drawable != null
+                        && (drawable.intrinsicWidth == -1 || drawable.intrinsicWidth > 0)
+                        && (drawable.intrinsicHeight == -1 || drawable.intrinsicHeight > 0)) {
+                        fallback(drawable)
+                    } else {
+                        clearFallback()
+                    }
                 }
             }
             null -> clearFallback()
-            else -> fallback(view.getBitmap())
+            else -> {
+                val bitmap = view.getBitmap()
+                if (bitmap.isValid()) {
+                    fallback(bitmap)
+                } else {
+                    clearFallback()
+                }
+            }
         }
 
         fun fallback(blurString: String, width: Int, height: Int, blurHash: BlurHash) = apply {

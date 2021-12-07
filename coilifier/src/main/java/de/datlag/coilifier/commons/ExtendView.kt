@@ -2,27 +2,60 @@ package de.datlag.coilifier.commons
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.view.drawToBitmap
 
 internal fun View.getBitmap(): Bitmap? {
     fun screenshotView(): Bitmap? {
-        val bitmap = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        this.draw(canvas)
-        return bitmap
+        val drawnBitmap = try {
+            this.drawToBitmap()
+        } catch (ignored: Exception) {
+            null
+        }
+
+        return if(drawnBitmap.isValid()) {
+            drawnBitmap
+        } else {
+            val bitmap = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            this.draw(canvas)
+            if (bitmap.isValid()) {
+                bitmap
+            } else {
+                null
+            }
+        }
     }
+
     return if (this.width > 0 && this.height > 0) {
-        return if (this is ImageView) {
-            return try {
-                this.drawable?.toBitmap() ?: screenshotView()
-            } catch (ignored: Exception) {
+        when (this) {
+            is ImageView -> {
+                try {
+                    val bitmap = this.drawable?.toBitmap()
+                    if (bitmap.isValid()) {
+                        bitmap
+                    } else {
+                        screenshotView()
+                    }
+                } catch (ignored: Exception) {
+                    screenshotView()
+                }
+            }
+            is TextureView -> {
+                val bitmap = this.bitmap
+                if (bitmap.isValid()) {
+                    bitmap
+                } else {
+                    screenshotView()
+                }
+            }
+            else -> {
                 screenshotView()
             }
-        } else {
-            screenshotView()
         }
     } else {
         null

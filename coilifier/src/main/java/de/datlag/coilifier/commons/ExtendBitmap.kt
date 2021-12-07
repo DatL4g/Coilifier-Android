@@ -13,3 +13,7 @@ internal fun Bitmap.scale(wantedSize: Int, byWidth: Boolean): Bitmap {
         this
     }
 }
+
+internal fun Bitmap?.isValid(): Boolean {
+    return this != null && !this.isRecycled && this.height > 0 && this.width > 0
+}

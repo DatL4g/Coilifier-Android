@@ -135,9 +135,6 @@ data class Coilifier<ResourceType> internal constructor(
         }
 
         fun error(drawable: Drawable?) = apply {
-            if (drawable is BitmapDrawable) {
-                if (!drawable.bitmap.isValid()) return clearError()
-            }
             this.errorDrawable = drawable
             this.errorResId = 0
             this.errorBitmap = null
@@ -154,15 +151,13 @@ data class Coilifier<ResourceType> internal constructor(
 
         fun error(view: View?) = when (view) {
             is ImageView -> {
-                val bitmap = view.getBitmap()
-                if (bitmap != null) {
-                    error(bitmap)
+                val drawable = view.drawable
+                if (drawable != null) {
+                    error(drawable)
                 } else {
-                    val drawable = view.drawable
-                    if (drawable != null
-                        && (drawable.intrinsicWidth == -1 || drawable.intrinsicWidth > 0)
-                        && (drawable.intrinsicHeight == -1 || drawable.intrinsicHeight > 0)) {
-                        error(drawable)
+                    val bitmap = view.getBitmap()
+                    if (bitmap != null) {
+                        error(bitmap)
                     } else {
                         clearError()
                     }
@@ -241,9 +236,6 @@ data class Coilifier<ResourceType> internal constructor(
 
         @JvmOverloads
         fun placeholder(drawable: Drawable?, scaling: PlaceholderScaling? = null) = apply {
-            if (drawable is BitmapDrawable) {
-                if (!drawable.bitmap.isValid()) return clearPlaceholder()
-            }
             this.placeholderDrawable = drawable
             this.placeholderResId = 0
             this.placeholderBitmap = null
@@ -262,15 +254,13 @@ data class Coilifier<ResourceType> internal constructor(
         @JvmOverloads
         fun placeholder(view: View?, scaling: PlaceholderScaling? = null) = when (view) {
             is ImageView -> {
-                val bitmap = view.getBitmap()
-                if (bitmap != null) {
-                    placeholder(bitmap, scaling)
+                val drawable = view.drawable
+                if (drawable != null) {
+                    placeholder(drawable, scaling)
                 } else {
-                    val drawable = view.drawable
-                    if (drawable != null
-                        && (drawable.intrinsicWidth == -1 || drawable.intrinsicWidth > 0)
-                        && (drawable.intrinsicHeight == -1 || drawable.intrinsicHeight > 0)) {
-                        placeholder(drawable, scaling)
+                    val bitmap = view.getBitmap()
+                    if (bitmap != null) {
+                        placeholder(bitmap, scaling)
                     } else {
                         clearPlaceholder()
                     }
@@ -289,15 +279,13 @@ data class Coilifier<ResourceType> internal constructor(
 
         fun placeholder(view: View?, scaleByWidth: Boolean?) = when (view) {
             is ImageView -> {
-                val bitmap = view.getBitmap()
-                if (bitmap != null) {
-                    placeholder(bitmap, PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
+                val drawable = view.drawable
+                if (drawable != null) {
+                    placeholder(drawable, PlaceholderScaling.fitCenter(view, scaleByWidth))
                 } else {
-                    val drawable = view.drawable
-                    if (drawable != null
-                        && (drawable.intrinsicWidth == -1 || drawable.intrinsicWidth > 0)
-                        && (drawable.intrinsicHeight == -1 || drawable.intrinsicHeight > 0)) {
-                        placeholder(drawable, PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
+                    val bitmap = view.getBitmap()
+                    if (bitmap != null) {
+                        placeholder(bitmap, PlaceholderScaling.fitCenter(view, scaleByWidth))
                     } else {
                         clearPlaceholder()
                     }
@@ -307,7 +295,7 @@ data class Coilifier<ResourceType> internal constructor(
             else -> {
                 val bitmap = view.getBitmap()
                 if (bitmap.isValid()) {
-                    placeholder(bitmap, PlaceholderScaling.fitCenter(view, scaleByWidth ?: true))
+                    placeholder(bitmap, PlaceholderScaling.fitCenter(view, scaleByWidth))
                 } else {
                     clearPlaceholder()
                 }
@@ -368,9 +356,6 @@ data class Coilifier<ResourceType> internal constructor(
         }
 
         fun fallback(drawable: Drawable?) = apply {
-            if (drawable is BitmapDrawable) {
-                if (!drawable.bitmap.isValid()) return clearFallback()
-            }
             this.fallbackDrawable = drawable
             this.fallbackResId = 0
             this.fallbackBitmap = null
@@ -385,15 +370,13 @@ data class Coilifier<ResourceType> internal constructor(
 
         fun fallback(view: View?) = when (view) {
             is ImageView -> {
-                val bitmap = view.getBitmap()
-                if (bitmap != null) {
-                    fallback(bitmap)
+                val drawable = view.drawable
+                if (drawable != null) {
+                    fallback(drawable)
                 } else {
-                    val drawable = view.drawable
-                    if (drawable != null
-                        && (drawable.intrinsicWidth == -1 || drawable.intrinsicWidth > 0)
-                        && (drawable.intrinsicHeight == -1 || drawable.intrinsicHeight > 0)) {
-                        fallback(drawable)
+                    val bitmap = view.getBitmap()
+                    if (bitmap != null) {
+                        fallback(bitmap)
                     } else {
                         clearFallback()
                     }
@@ -525,7 +508,7 @@ data class Coilifier<ResourceType> internal constructor(
         fun override(size: Float) = override(size, size)
         fun override(size: Double) = override(size, size)
 
-        fun downsample(strategy: DownsampleStrategy) = apply {
+        fun downSample(strategy: DownsampleStrategy) = apply {
             this.downsampleStrategy = strategy
         }
 

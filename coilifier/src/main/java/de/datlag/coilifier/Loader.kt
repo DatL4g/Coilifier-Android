@@ -33,29 +33,43 @@ class Loader<ResourceType>(
         } else {
             requestBuilder
         }
-        when (any) {
+
+        val loadAny: Any? = when (any) {
+            is ImageLoader.Any -> any.any
+            is ImageLoader.Bitmap -> any.bitmap
+            is ImageLoader.ByteArray -> any.byteArray
+            is ImageLoader.Drawable -> any.drawable
+            is ImageLoader.File -> any.file
+            is ImageLoader.Resource -> any.resId
+            is ImageLoader.String -> any.uri
+            is ImageLoader.Uri -> any.uri
+            is ImageLoader.View -> any.view
+            else -> any
+        }
+
+        when (loadAny) {
             is Bitmap -> appliedRequestBuilder.apply {
-                if (any.isValid()) {
-                    load(any)
+                if (loadAny.isValid()) {
+                    load(loadAny)
                 } else {
                     load(String())
                 }
             }
-            is Drawable -> appliedRequestBuilder.apply { load(any) }
-            is String -> appliedRequestBuilder.apply { load(any) }
-            is Int -> appliedRequestBuilder.apply { load(any) }
-            is Uri -> appliedRequestBuilder.apply { load(any) }
-            is File -> appliedRequestBuilder.apply { load(any) }
-            is ByteArray -> appliedRequestBuilder.apply { load(any) }
+            is Drawable -> appliedRequestBuilder.apply { load(loadAny) }
+            is String -> appliedRequestBuilder.apply { load(loadAny) }
+            is Int -> appliedRequestBuilder.apply { load(loadAny) }
+            is Uri -> appliedRequestBuilder.apply { load(loadAny) }
+            is File -> appliedRequestBuilder.apply { load(loadAny) }
+            is ByteArray -> appliedRequestBuilder.apply { load(loadAny) }
             is View -> appliedRequestBuilder.apply {
-                val bitmap = any.getBitmap()
+                val bitmap = loadAny.getBitmap()
                 if (bitmap.isValid()) {
                     load(bitmap)
                 } else {
                     load(String())
                 }
             }
-            else -> appliedRequestBuilder.apply { load(any) }
+            else -> appliedRequestBuilder.apply { load(loadAny) }
         }
         loadData(helper)
         return this

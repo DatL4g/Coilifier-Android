@@ -11,6 +11,18 @@ sealed class ImageLoader {
     class Uri(val uri: android.net.Uri) : ImageLoader()
     class View(val view: android.view.View) : ImageLoader()
 
+    fun getValue(): kotlin.Any? = when (this) {
+        is Any -> this.any
+        is Bitmap -> this.bitmap
+        is ByteArray -> this.byteArray
+        is Drawable -> this.drawable
+        is File -> this.file
+        is Resource -> this.resId
+        is String -> this.uri
+        is Uri -> this.uri
+        is View -> this.view
+    }
+
     companion object {
         fun create(any: kotlin.Any?): ImageLoader = when (any) {
             is android.graphics.Bitmap -> Bitmap(any)

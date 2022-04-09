@@ -21,7 +21,7 @@ internal fun View.getBitmap(): Bitmap? {
             drawnBitmap
         } else {
             val bitmap = try {
-                Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888)
+                Bitmap.createBitmap(this.blurWidth ?: 0, this.blurHeight ?: 0, Bitmap.Config.ARGB_8888)
             } catch (ignored: Exception) { null }
 
             if (bitmap != null && !bitmap.isRecycled) {
@@ -37,7 +37,7 @@ internal fun View.getBitmap(): Bitmap? {
         }
     }
 
-    return if (this.width > 0 && this.height > 0) {
+    return if ((this.blurWidth ?: 0) > 0 && (this.blurHeight ?: 0) > 0) {
         when (this) {
             is ImageView -> {
                 try {
@@ -79,7 +79,6 @@ internal val View.blurWidth: Int?
         return when {
             this.width > 0 -> this.width
             this.measuredWidth > 0 -> this.measuredWidth
-            this.minimumWidth > 0 -> this.minimumWidth
             this.layoutParams.width == ViewGroup.LayoutParams.MATCH_PARENT -> resources?.displayMetrics?.widthPixels
             else -> null
         }
@@ -90,7 +89,6 @@ internal val View.blurHeight: Int?
         return when {
             this.height > 0 -> this.height
             this.measuredHeight > 0 -> this.measuredHeight
-            this.minimumHeight > 0 -> this.minimumHeight
             this.layoutParams.height == ViewGroup.LayoutParams.MATCH_PARENT -> resources?.displayMetrics?.heightPixels
             else -> null
         }

@@ -193,8 +193,8 @@ data class Coilifier<ResourceType> internal constructor(
 
         @JvmOverloads
         fun error(blurString: String, view: View, blurHash: BlurHash = this.blurHash ?: BlurHash(view.context)) = apply {
-            val width = view.blurWidth
-            val height = view.blurHeight
+            val width = view.blurWidth ?: if (view.minimumWidth > 0) view.minimumWidth else null
+            val height = view.blurHeight ?: if (view.minimumHeight > 0) view.minimumHeight else null
 
             if (width != null && height != null) {
                 error(blurString, width, height, blurHash)
@@ -204,9 +204,17 @@ data class Coilifier<ResourceType> internal constructor(
                 error(blurString, height, height, blurHash)
             } else {
                 view.post {
-                    error(blurString, view.blurWidth ?: 0, view.blurHeight ?: 0, blurHash)
+                    error(blurString, view.blurWidth ?: view.minimumWidth, view.blurHeight ?: view.minimumHeight, blurHash)
                 }
             }
+        }
+
+        fun error(loader: ImageLoader) = when (loader) {
+            is ImageLoader.Bitmap -> error(loader.bitmap)
+            is ImageLoader.Drawable -> error(loader.drawable)
+            is ImageLoader.Resource -> error(loader.resId)
+            is ImageLoader.View -> error(loader.view)
+            else -> this
         }
 
         fun error(any: Any?): Builder<ResourceType> = when (any) {
@@ -215,6 +223,7 @@ data class Coilifier<ResourceType> internal constructor(
             is Bitmap -> error(any)
             is View -> error(any)
             is RequestBuilder<*> -> error(any)
+            is ImageLoader -> error(any)
             null -> clearError()
             else -> this
         }
@@ -316,8 +325,8 @@ data class Coilifier<ResourceType> internal constructor(
 
         @JvmOverloads
         fun placeholder(blurString: String, view: View, blurHash: BlurHash = this.blurHash ?: BlurHash(view.context), scaling: PlaceholderScaling? = null) = apply {
-            val width = view.blurWidth
-            val height = view.blurHeight
+            val width = view.blurWidth ?: if (view.minimumWidth > 0) view.minimumWidth else null
+            val height = view.blurHeight ?: if (view.minimumHeight > 0) view.minimumHeight else null
 
             if (width != null && height != null) {
                 placeholder(blurString, width, height, blurHash, scaling)
@@ -327,9 +336,17 @@ data class Coilifier<ResourceType> internal constructor(
                 placeholder(blurString, height, height, blurHash, scaling)
             } else {
                 view.post {
-                    placeholder(blurString, view.blurWidth ?: 0, view.blurHeight ?: 0, blurHash, scaling)
+                    placeholder(blurString, view.blurWidth ?: view.minimumWidth, view.blurHeight ?: view.minimumHeight, blurHash, scaling)
                 }
             }
+        }
+
+        fun placeholder(loader: ImageLoader, scaling: PlaceholderScaling? = null) = when (loader) {
+            is ImageLoader.Bitmap -> placeholder(loader.bitmap, scaling)
+            is ImageLoader.Drawable -> placeholder(loader.drawable, scaling)
+            is ImageLoader.Resource -> placeholder(loader.resId, scaling)
+            is ImageLoader.View -> placeholder(loader.view, scaling)
+            else -> this
         }
 
         @JvmOverloads
@@ -338,6 +355,7 @@ data class Coilifier<ResourceType> internal constructor(
             is Drawable -> placeholder(any, scaling)
             is Bitmap -> placeholder(any, scaling)
             is View -> placeholder(any, scaling)
+            is ImageLoader -> placeholder(any, scaling)
             null -> clearPlaceholder()
             else -> this
         }
@@ -405,8 +423,8 @@ data class Coilifier<ResourceType> internal constructor(
 
         @JvmOverloads
         fun fallback(blurString: String, view: View, blurHash: BlurHash = this.blurHash ?: BlurHash(view.context)) = apply {
-            val width = view.blurWidth
-            val height = view.blurHeight
+            val width = view.blurWidth ?: if (view.minimumWidth > 0) view.minimumWidth else null
+            val height = view.blurHeight ?: if (view.minimumHeight > 0) view.minimumHeight else null
 
             if (width != null && height != null) {
                 fallback(blurString, width, height, blurHash)
@@ -416,9 +434,17 @@ data class Coilifier<ResourceType> internal constructor(
                 fallback(blurString, height, height, blurHash)
             } else {
                 view.post {
-                    fallback(blurString, view.blurWidth ?: 0, view.blurHeight ?: 0, blurHash)
+                    fallback(blurString, view.blurWidth ?: view.minimumWidth, view.blurHeight ?: view.minimumHeight, blurHash)
                 }
             }
+        }
+
+        fun fallback(loader: ImageLoader) = when (loader) {
+            is ImageLoader.Bitmap -> fallback(loader.bitmap)
+            is ImageLoader.Drawable -> fallback(loader.drawable)
+            is ImageLoader.Resource -> fallback(loader.resId)
+            is ImageLoader.View -> fallback(loader.view)
+            else -> this
         }
 
         fun fallback(any: Any?) = when (any) {
@@ -426,6 +452,7 @@ data class Coilifier<ResourceType> internal constructor(
             is Drawable -> fallback(any)
             is Bitmap -> fallback(any)
             is View -> fallback(any)
+            is ImageLoader -> fallback(any)
             null -> clearFallback()
             else -> this
         }

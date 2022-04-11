@@ -12,7 +12,7 @@ import android.widget.ImageView
 import androidx.core.graphics.drawable.toBitmap
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.request.target.Target
-import de.datlag.coilifier.commons.getBitmap
+import de.datlag.coilifier.commons.getDrawable
 import de.datlag.coilifier.commons.isValid
 import de.datlag.coilifier.commons.scale
 import java.io.File
@@ -62,7 +62,7 @@ class Loader<ResourceType>(
             is File -> appliedRequestBuilder.apply { load(loadAny) }
             is ByteArray -> appliedRequestBuilder.apply { load(loadAny) }
             is View -> appliedRequestBuilder.apply {
-                val bitmap = loadAny.getBitmap()
+                val bitmap = loadAny.getDrawable()
                 if (bitmap.isValid()) {
                     load(bitmap)
                 } else {
@@ -87,43 +87,10 @@ class Loader<ResourceType>(
                 helper.errorBitmap != null && helper.errorBitmap.isValid() -> error(BitmapDrawable(resources, helper.errorBitmap))
                 helper.errorRequest != null -> error(helper.errorRequest)
             }
-            if (helper.placeholderScaling != null && helper.placeholderScaling.max) {
-                val scaleBitmap = when {
-                    helper.placeholderResId != null && helper.placeholderResId != 0 -> BitmapFactory.decodeResource(resources, helper.placeholderResId)
-                    helper.placeholderDrawable != null -> try {
-                        val bitmap = helper.placeholderDrawable.toBitmap()
-                        if (bitmap.isValid()) {
-                            bitmap
-                        } else {
-                            null
-                        }
-                    } catch (ignored: Exception) { null }
-                    helper.placeholderBitmap != null && helper.placeholderBitmap.isValid() -> helper.placeholderBitmap
-                    else -> null
-                }
-                if (helper.placeholderScaling.size != null && helper.placeholderScaling.scaleByWidth != null) {
-                    placeholder(BitmapDrawable(resources, scaleBitmap?.scale(helper.placeholderScaling.size, helper.placeholderScaling.scaleByWidth)))
-                } else {
-                    val maxWidthPixel: Int? = resources?.displayMetrics?.widthPixels
-                    val maxHeightPixel: Int? = resources?.displayMetrics?.heightPixels
-                    when {
-                        maxWidthPixel != null -> {
-                            placeholder(BitmapDrawable(resources, scaleBitmap?.scale(maxWidthPixel, true)))
-                        }
-                        maxHeightPixel != null -> {
-                            placeholder(BitmapDrawable(resources, scaleBitmap?.scale(maxHeightPixel, false)))
-                        }
-                        else -> {
-                            placeholder(BitmapDrawable(resources, scaleBitmap))
-                        }
-                    }
-                }
-            } else {
-                when {
-                    helper.placeholderResId != null && helper.placeholderResId != 0 -> placeholder(helper.placeholderResId)
-                    helper.placeholderDrawable != null -> placeholder(helper.placeholderDrawable)
-                    helper.placeholderBitmap != null && helper.placeholderBitmap.isValid() -> placeholder(BitmapDrawable(resources, helper.placeholderBitmap))
-                }
+            when {
+                helper.placeholderResId != null && helper.placeholderResId != 0 -> placeholder(helper.placeholderResId)
+                helper.placeholderDrawable != null -> placeholder(helper.placeholderDrawable)
+                helper.placeholderBitmap != null && helper.placeholderBitmap.isValid() -> placeholder(BitmapDrawable(resources, helper.placeholderBitmap))
             }
 
             when {
@@ -136,7 +103,6 @@ class Loader<ResourceType>(
                     addListener(it)
                 }
             }
-            helper.thumbnailSizeMultiplier?.let { thumbnail(it) }
             if (helper.thumbnailRequestBuilder.isNotEmpty()) {
                 thumbnail(*helper.thumbnailRequestBuilder.toTypedArray())
             }

@@ -2,6 +2,8 @@ package de.datlag.coilifier.commons
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
@@ -9,7 +11,7 @@ import android.widget.ImageView
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.drawToBitmap
 
-internal fun View.getBitmap(): Bitmap? {
+internal fun View.getDrawable(): Drawable? {
     fun screenshotView(): Bitmap? {
         val drawnBitmap = try {
             this.drawToBitmap()
@@ -20,20 +22,7 @@ internal fun View.getBitmap(): Bitmap? {
         return if (drawnBitmap.isValid()) {
             drawnBitmap
         } else {
-            val bitmap = try {
-                Bitmap.createBitmap(this.blurWidth ?: 0, this.blurHeight ?: 0, Bitmap.Config.ARGB_8888)
-            } catch (ignored: Exception) { null }
-
-            if (bitmap != null && !bitmap.isRecycled) {
-                val canvas = Canvas(bitmap)
-                this.draw(canvas)
-            }
-
-            if (bitmap.isValid()) {
-                bitmap
-            } else {
-                null
-            }
+            null
         }
     }
 
@@ -41,32 +30,32 @@ internal fun View.getBitmap(): Bitmap? {
         when (this) {
             is ImageView -> {
                 try {
-                    val bitmap = try {
-                        this.drawable?.toBitmap()
+                    val drawable = try {
+                        this.drawable
                     } catch (ignored: Exception) { null }
 
-                    if (bitmap.isValid()) {
-                        bitmap
+                    if (drawable.isValid()) {
+                        drawable
                     } else {
-                        screenshotView()
+                        BitmapDrawable(this.resources, screenshotView())
                     }
                 } catch (ignored: Exception) {
-                    screenshotView()
+                    BitmapDrawable(this.resources, screenshotView())
                 }
             }
             is TextureView -> {
-                val bitmap = try {
-                    this.bitmap
+                val drawable = try {
+                    BitmapDrawable(this.resources, this.bitmap)
                 } catch (ignored: Exception) { null }
 
-                if (bitmap.isValid()) {
-                    bitmap
+                if (drawable.isValid()) {
+                    drawable
                 } else {
-                    screenshotView()
+                    BitmapDrawable(this.resources, screenshotView())
                 }
             }
             else -> {
-                screenshotView()
+                BitmapDrawable(this.resources, screenshotView())
             }
         }
     } else {

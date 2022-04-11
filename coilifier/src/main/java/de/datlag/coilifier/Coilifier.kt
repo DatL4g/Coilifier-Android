@@ -3,9 +3,7 @@ package de.datlag.coilifier
 import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.view.TextureView
 import android.view.View
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
@@ -21,7 +19,7 @@ import com.bumptech.glide.request.BaseRequestOptions
 import com.bumptech.glide.request.RequestListener
 import de.datlag.coilifier.commons.blurHeight
 import de.datlag.coilifier.commons.blurWidth
-import de.datlag.coilifier.commons.getBitmap
+import de.datlag.coilifier.commons.getDrawable
 import de.datlag.coilifier.commons.isValid
 import java.io.File
 
@@ -33,12 +31,10 @@ data class Coilifier<ResourceType> internal constructor(
     @DrawableRes val placeholderResId: Int?,
     val placeholderDrawable: Drawable?,
     val placeholderBitmap: Bitmap?,
-    val placeholderScaling: PlaceholderScaling?,
     @DrawableRes val fallbackResId: Int?,
     val fallbackDrawable: Drawable?,
     val fallbackBitmap: Bitmap?,
     val requestListener: List<RequestListener<ResourceType>>,
-    val thumbnailSizeMultiplier: Float?,
     val thumbnailRequestBuilder: List<RequestBuilder<ResourceType>>,
     val transitionOptions: TransitionOptions<*, in ResourceType?>?,
     val transformOptions: List<Transformation<Bitmap?>>,
@@ -69,7 +65,6 @@ data class Coilifier<ResourceType> internal constructor(
         private var placeholderResId: Int? = null
         private var placeholderDrawable: Drawable? = null
         private var placeholderBitmap: Bitmap? = null
-        private var placeholderScaling: PlaceholderScaling? = null
 
         @DrawableRes
         private var fallbackResId: Int? = null
@@ -150,22 +145,9 @@ data class Coilifier<ResourceType> internal constructor(
         }
 
         fun error(view: View?) = when (view) {
-            is ImageView -> {
-                val drawable = view.drawable
-                if (drawable != null) {
-                    error(drawable)
-                } else {
-                    val bitmap = view.getBitmap()
-                    if (bitmap != null) {
-                        error(bitmap)
-                    } else {
-                        clearError()
-                    }
-                }
-            }
             null -> clearError()
             else -> {
-                val bitmap = view.getBitmap()
+                val bitmap = view.getDrawable()
                 if (bitmap.isValid()) {
                     error(bitmap)
                 } else {
@@ -235,127 +217,79 @@ data class Coilifier<ResourceType> internal constructor(
             this.errorRequest = null
         }
 
-        @JvmOverloads
-        fun placeholder(@DrawableRes drawableResId: Int, scaling: PlaceholderScaling? = null) = apply {
+        fun placeholder(@DrawableRes drawableResId: Int) = apply {
             this.placeholderResId = drawableResId
             this.placeholderDrawable = null
             this.placeholderBitmap = null
-            this.placeholderScaling = scaling
         }
 
-        @JvmOverloads
-        fun placeholder(drawable: Drawable?, scaling: PlaceholderScaling? = null) = apply {
+        fun placeholder(drawable: Drawable?) = apply {
             this.placeholderDrawable = drawable
             this.placeholderResId = 0
             this.placeholderBitmap = null
-            this.placeholderScaling = scaling
         }
 
-        @JvmOverloads
-        fun placeholder(bitmap: Bitmap?, scaling: PlaceholderScaling? = null) = apply {
+        fun placeholder(bitmap: Bitmap?) = apply {
             if (!bitmap.isValid()) return clearPlaceholder()
             this.placeholderBitmap = bitmap
             this.placeholderResId = 0
             this.placeholderDrawable = null
-            this.placeholderScaling = scaling
         }
 
-        @JvmOverloads
-        fun placeholder(view: View?, scaling: PlaceholderScaling? = null) = when (view) {
-            is ImageView -> {
-                val drawable = view.drawable
-                if (drawable != null) {
-                    placeholder(drawable, scaling)
-                } else {
-                    val bitmap = view.getBitmap()
-                    if (bitmap != null) {
-                        placeholder(bitmap, scaling)
-                    } else {
-                        clearPlaceholder()
-                    }
-                }
-            }
+        fun placeholder(view: View?) = when (view) {
             null -> clearPlaceholder()
             else -> {
-                val bitmap = view.getBitmap()
+                val bitmap = view.getDrawable()
                 if (bitmap.isValid()) {
-                    placeholder(bitmap, scaling)
+                    placeholder(bitmap)
                 } else {
                     clearPlaceholder()
                 }
             }
         }
 
-        fun placeholder(view: View?, scaleByWidth: Boolean?) = when (view) {
-            is ImageView -> {
-                val drawable = view.drawable
-                if (drawable != null) {
-                    placeholder(drawable, PlaceholderScaling.fitCenter(view, scaleByWidth))
-                } else {
-                    val bitmap = view.getBitmap()
-                    if (bitmap != null) {
-                        placeholder(bitmap, PlaceholderScaling.fitCenter(view, scaleByWidth))
-                    } else {
-                        clearPlaceholder()
-                    }
-                }
-            }
-            null -> clearPlaceholder()
-            else -> {
-                val bitmap = view.getBitmap()
-                if (bitmap.isValid()) {
-                    placeholder(bitmap, PlaceholderScaling.fitCenter(view, scaleByWidth))
-                } else {
-                    clearPlaceholder()
-                }
-            }
-        }
-
-        @JvmOverloads
-        fun placeholder(blurString: String, width: Int, height: Int, blurHash: BlurHash, scaling: PlaceholderScaling? = null) = apply {
+        fun placeholder(blurString: String, width: Int, height: Int, blurHash: BlurHash) = apply {
             if (width > 0 && height > 0) {
-                placeholder(getNewBlurHash(blurHash).execute(blurString, width, height), scaling)
+                placeholder(getNewBlurHash(blurHash).execute(blurString, width, height))
             }
         }
 
-        @JvmOverloads
-        fun placeholder(blurString: String, width: Int, height: Int, scaling: PlaceholderScaling? = null) = apply {
-            placeholder(blurString, width, height, getNewBlurHash(), scaling)
+        fun placeholder(blurString: String, width: Int, height: Int) = apply {
+            placeholder(blurString, width, height, getNewBlurHash())
         }
 
         @JvmOverloads
-        fun placeholder(blurString: String, view: View, blurHash: BlurHash = this.blurHash ?: BlurHash(view.context), scaling: PlaceholderScaling? = null) = apply {
+        fun placeholder(blurString: String, view: View, blurHash: BlurHash = this.blurHash ?: BlurHash(view.context)) = apply {
             val width = view.blurWidth ?: if (view.minimumWidth > 0) view.minimumWidth else null
             val height = view.blurHeight ?: if (view.minimumHeight > 0) view.minimumHeight else null
 
             if (width != null && height != null) {
-                placeholder(blurString, width, height, blurHash, scaling)
+                placeholder(blurString, width, height, blurHash)
             } else if (width != null && height == null) {
-                placeholder(blurString, width, width, blurHash, scaling)
+                placeholder(blurString, width, width, blurHash)
             } else if (width == null && height != null) {
-                placeholder(blurString, height, height, blurHash, scaling)
+                placeholder(blurString, height, height, blurHash)
             } else {
                 view.post {
-                    placeholder(blurString, view.blurWidth ?: view.minimumWidth, view.blurHeight ?: view.minimumHeight, blurHash, scaling)
+                    placeholder(blurString, view.blurWidth ?: view.minimumWidth, view.blurHeight ?: view.minimumHeight, blurHash)
                 }
             }
         }
 
-        fun placeholder(loader: ImageLoader, scaling: PlaceholderScaling? = null) = when (loader) {
-            is ImageLoader.Bitmap -> placeholder(loader.bitmap, scaling)
-            is ImageLoader.Drawable -> placeholder(loader.drawable, scaling)
-            is ImageLoader.Resource -> placeholder(loader.resId, scaling)
-            is ImageLoader.View -> placeholder(loader.view, scaling)
+        fun placeholder(loader: ImageLoader) = when (loader) {
+            is ImageLoader.Bitmap -> placeholder(loader.bitmap)
+            is ImageLoader.Drawable -> placeholder(loader.drawable)
+            is ImageLoader.Resource -> placeholder(loader.resId)
+            is ImageLoader.View -> placeholder(loader.view)
             else -> this
         }
 
-        @JvmOverloads
-        fun placeholder(any: Any?, scaling: PlaceholderScaling? = null) = when (any) {
-            is Int -> placeholder(any, scaling)
-            is Drawable -> placeholder(any, scaling)
-            is Bitmap -> placeholder(any, scaling)
-            is View -> placeholder(any, scaling)
-            is ImageLoader -> placeholder(any, scaling)
+        fun placeholder(any: Any?) = when (any) {
+            is Int -> placeholder(any)
+            is Drawable -> placeholder(any)
+            is Bitmap -> placeholder(any)
+            is View -> placeholder(any)
+            is ImageLoader -> placeholder(any)
             null -> clearPlaceholder()
             else -> this
         }
@@ -364,7 +298,6 @@ data class Coilifier<ResourceType> internal constructor(
             this.placeholderBitmap = null
             this.placeholderDrawable = null
             this.placeholderResId = 0
-            this.placeholderScaling = null
         }
 
         fun fallback(@DrawableRes drawableResId: Int) = apply {
@@ -387,22 +320,9 @@ data class Coilifier<ResourceType> internal constructor(
         }
 
         fun fallback(view: View?) = when (view) {
-            is ImageView -> {
-                val drawable = view.drawable
-                if (drawable != null) {
-                    fallback(drawable)
-                } else {
-                    val bitmap = view.getBitmap()
-                    if (bitmap != null) {
-                        fallback(bitmap)
-                    } else {
-                        clearFallback()
-                    }
-                }
-            }
             null -> clearFallback()
             else -> {
-                val bitmap = view.getBitmap()
+                val bitmap = view.getDrawable()
                 if (bitmap.isValid()) {
                     fallback(bitmap)
                 } else {
@@ -602,12 +522,10 @@ data class Coilifier<ResourceType> internal constructor(
             placeholderResId,
             placeholderDrawable,
             placeholderBitmap,
-            placeholderScaling,
             fallbackResId,
             fallbackDrawable,
             fallbackBitmap,
             requestListener,
-            thumbnailSizeMultiplier,
             thumbnailRequestBuilder,
             transitionOptions,
             transformOptions,
